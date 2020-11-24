@@ -164,6 +164,7 @@ OBSBasicSettings {
     qproperty-videoIcon: url(:settings/images/settings/video.svg);
     qproperty-hotkeysIcon: url(:settings/images/settings/hotkeys.svg);
     qproperty-advancedIcon: url(:settings/images/settings/advanced.svg);
+    qproperty-loginIcon: url(:settings/images/settings/login.svg);
 }
 
 OBSBasicSettings QListWidget::item {

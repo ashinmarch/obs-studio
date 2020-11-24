@@ -6310,6 +6310,49 @@ void OBSBasic::OnVirtualCamStop(int)
 	OnDeactivate();
 }
 
+bool reportBroadcast(config_t* config, bool isJoin) {
+	const char* broadcastId = config_get_string(
+			config, "Login", "BroadcastId");
+
+	const char* token = config_get_string(config, "Login", "Token");
+
+	// Command to report join or leave broadcast
+	char cmdStr[2000];
+	sprintf(cmdStr, "curl --location --request POST \
+		'https://server.cms.jojo.la/live/api/live/%s/%s' \
+		--header 'authorization: %s' \
+		--header 'Content-Type: application/json;charset=UTF-8' \
+		--data-raw '{}'",
+		isJoin ? "join" : "leave", broadcastId, token);
+
+	// std::cout << cmdStr << std::endl;
+
+	auto responseJson = ::execCmd(cmdStr);
+
+	// std::cout << responseJson << std::endl;
+
+	// Parse response json
+	obs_data_t *responseObj = obs_data_create_from_json(
+			responseJson.c_str());
+
+	// std::cout << obs_data_get_json(responseObj) << std::endl;
+
+	int status = static_cast<int>(obs_data_get_int(responseObj, "status"));
+
+	std::cout << "Status: " << status << std::endl;
+
+	if (status != 200) {
+		char msg[200];
+		sprintf(msg, "向服务器汇报直播失败. Status: %d.", status);
+		::promptMsgBox(msg);
+		obs_data_release(responseObj);
+		return false;
+	}
+
+	obs_data_release(responseObj);
+	return true;
+}
+
 void OBSBasic::on_streamButton_clicked()
 {
 	if (outputHandler->StreamingActive()) {
@@ -6331,6 +6374,8 @@ void OBSBasic::on_streamButton_clicked()
 		}
 
 		StopStreaming();
+
+		reportBroadcast(Config(), false);
 	} else {
 		if (!UIValidation::NoSourcesConfirmation(this)) {
 			ui->streamButton->setChecked(false);
@@ -6388,6 +6433,8 @@ void OBSBasic::on_streamButton_clicked()
 		}
 
 		StartStreaming();
+
+		reportBroadcast(Config(), true);
 	}
 }
 

@@ -237,6 +237,180 @@ void OBSBasicSettings::SaveStream1Settings()
 	SaveCheckBox(ui->ignoreRecommended, "Stream1", "IgnoreRecommended");
 }
 
+void OBSBasicSettings::LoadLoginSettings()
+{
+	loading = true;
+	const char* loginUsername = config_get_string(
+			main->Config(), "Login", "LoginUsername");
+
+	const char* loginPassword = config_get_string(
+			main->Config(), "Login", "LoginPassword");
+
+	ui->loginUsername->setText(QT_UTF8(loginUsername));
+	ui->loginPassword->setText(QT_UTF8(loginPassword));
+	loading = false;
+}
+
+std::string execCmd(const char* cmd) {
+    std::array<char, 128> buffer;
+    std::string result;
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(cmd, "r"), pclose);
+    if (!pipe) {
+        throw std::runtime_error("popen() failed!");
+    }
+    while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
+        result += buffer.data();
+    }
+    return result;
+}
+
+void promptMsgBox(const char* msg) {
+	QMessageBox msgBox;
+	msgBox.setWindowModality(Qt::NonModal);
+	msgBox.setText(msg);
+	msgBox.exec();
+}
+
+void OBSBasicSettings::SaveLoginSettings()
+{
+	// if (ui->loginUsername->property("changed").toBool()) {
+	const char *username = QT_TO_UTF8(ui->loginUsername->text());
+	config_set_string(main->Config(), "Login", "LoginUsername", username);
+
+	const char *password = QT_TO_UTF8(ui->loginPassword->text());
+	config_set_string(main->Config(), "Login", "LoginPassword", password);
+
+	// Command to fetch token
+	char cmdStr[2000];
+	sprintf(cmdStr, "curl --location --request POST \
+		'https://server.cms.jojo.la/cms/api/cms/login/login' \
+		--header 'Content-Type: application/json' \
+		--data-raw '{\"username\":\"%s\",\"password\":\"%s\"}'",
+		username, password);
+
+	// std::cout << cmdStr << std::endl;
+
+	auto loginResultJson = ::execCmd(cmdStr);
+
+	// std::cout << loginResultJson << std::endl;
+
+	// Parse login result json
+	obs_data_t *loginResultObj = obs_data_create_from_json(
+			loginResultJson.c_str());
+
+	// std::cout << obs_data_get_json(loginResultObj) << std::endl;
+
+	int status = static_cast<int>(obs_data_get_int(loginResultObj, "status"));
+
+	std::cout << "Status: " << status << std::endl;
+
+	if (status != 200) {
+		char msg[200];
+		sprintf(msg, "登录失败. Status: %d.", status);
+		::promptMsgBox(msg);
+		obs_data_release(loginResultObj);
+		return;
+	}
+
+	obs_data_t* dataObj = obs_data_get_obj(loginResultObj, "data");
+	const char* token = obs_data_get_string(dataObj, "tn");
+	std::cout << "Token: " << token << std::endl;
+
+	config_set_string(main->Config(), "Login", "Token", token);
+
+	// Command: Use token to get stream address
+	sprintf(cmdStr, "curl --location --request GET \
+		'https://server.cms.jojo.la/live/api/live/recent' \
+		--header 'authorization: %s' --data-raw ''",
+		token);
+
+	// std::cout << cmdStr << std::endl;
+
+	obs_data_release(loginResultObj);
+	obs_data_release(dataObj);
+
+	auto addrResultJson = ::execCmd(cmdStr);
+	// std::cout << addrResultJson << std::endl;
+
+	// Parse stream address result json
+	obs_data_t *addrResultObj = obs_data_create_from_json(
+			addrResultJson.c_str());
+	// std::cout << obs_data_get_json(addrResultObj) << std::endl;
+
+	status = static_cast<int>(obs_data_get_int(addrResultObj, "status"));
+	if (status != 200) {
+		char msg[200];
+		sprintf(msg, "获取推流服务器地址失败. Status: %d.", status);
+		promptMsgBox(msg);
+		obs_data_release(addrResultObj);
+		return;
+	}
+
+	dataObj = obs_data_get_obj(addrResultObj, "data");
+	const char* server = obs_data_get_string(dataObj, "pushServer");
+	std::cout << "PushServer: " << server << std::endl;
+
+	if (server == nullptr || *server == '\0') {
+		char msg[200];
+		sprintf(msg, "解析推流服务器地址失败.");
+		promptMsgBox(msg);
+		obs_data_release(addrResultObj);
+		obs_data_release(dataObj);
+		return;
+	}
+
+	const char* key = obs_data_get_string(dataObj, "pushKey");
+	std::cout << "PushKey: " << key << std::endl;
+	if (key == nullptr || *key == '\0') {
+		char msg[200];
+		sprintf(msg, "解析推流服务器密钥失败.");
+		promptMsgBox(msg);
+		obs_data_release(addrResultObj);
+		obs_data_release(dataObj);
+		return;
+	}
+
+	const char* broadcastId = obs_data_get_string(dataObj, "id");
+	std::cout << "BroadcastId: " << broadcastId << std::endl;
+	if (broadcastId == nullptr || *broadcastId == '\0') {
+		char msg[200];
+		sprintf(msg, "解析直播ID失败.");
+		promptMsgBox(msg);
+		obs_data_release(addrResultObj);
+		obs_data_release(dataObj);
+		return;
+	}
+
+	config_set_string(main->Config(), "Login", "BroadcastId", broadcastId);
+
+	// Save stream settings
+	obs_service_t *oldService = main->GetService();
+	OBSData hotkeyData = obs_hotkeys_save_service(oldService);
+	obs_data_release(hotkeyData);
+
+	OBSData settings = obs_data_create();
+	obs_data_release(settings);
+
+	obs_data_set_string(settings, "server", server);
+	obs_data_set_string(settings, "key", key);
+
+	OBSService newService = obs_service_create(
+		"rtmp_custom", "default_service", settings, hotkeyData);
+	obs_service_release(newService);
+
+	obs_data_release(addrResultObj);
+	obs_data_release(dataObj);
+
+	if (!newService)
+		return;
+
+	main->SetService(newService);
+	main->SaveService();
+	main->auth = auth;
+	if (!!main->auth)
+		main->auth->LoadUI();
+}
+
 void OBSBasicSettings::UpdateMoreInfoLink()
 {
 	if (IsCustomService()) {
@@ -297,6 +471,8 @@ void OBSBasicSettings::UpdateKeyLink()
 		ui->getStreamKeyButton->show();
 	}
 }
+
+
 
 void OBSBasicSettings::LoadServices(bool showAll)
 {
@@ -475,6 +651,17 @@ void OBSBasicSettings::on_authPwShow_clicked()
 	} else {
 		ui->authPw->setEchoMode(QLineEdit::Password);
 		ui->authPwShow->setText(QTStr("Show"));
+	}
+}
+
+void OBSBasicSettings::on_loginPwShow_clicked()
+{
+	if (ui->loginPassword->echoMode() == QLineEdit::Password) {
+		ui->loginPassword->setEchoMode(QLineEdit::Normal);
+		ui->loginPwShow->setText(QTStr("Hide"));
+	} else {
+		ui->loginPassword->setEchoMode(QLineEdit::Password);
+		ui->loginPwShow->setText(QTStr("Show"));
 	}
 }
 

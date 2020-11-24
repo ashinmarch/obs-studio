@@ -25,6 +25,10 @@
 #include <obs.hpp>
 #include <vector>
 #include <memory>
+#include <cstdio>
+#include <iostream>
+#include <stdexcept>
+#include <array>
 #include "window-main.hpp"
 #include "window-basic-interaction.hpp"
 #include "window-basic-properties.hpp"
@@ -68,6 +72,9 @@ class OBSBasicStats;
 #define PREVIEW_EDGE_SIZE 10
 
 struct BasicOutputHandler;
+
+std::string execCmd(const char* cmd);
+void promptMsgBox(const char* msg);
 
 enum class QtDataRole {
 	OBSRef = Qt::UserRole,

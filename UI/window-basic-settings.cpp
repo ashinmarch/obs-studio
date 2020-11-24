@@ -349,6 +349,7 @@ void OBSBasicSettings::HookWidget(QWidget *widget, const char *signal,
 #define TOGGLE_CHANGED  SIGNAL(toggled(bool))
 
 #define GENERAL_CHANGED SLOT(GeneralChanged())
+#define LOGIN_CHANGED   SLOT(LoginChanged())
 #define STREAM1_CHANGED SLOT(Stream1Changed())
 #define OUTPUTS_CHANGED SLOT(OutputsChanged())
 #define AUDIO_RESTART   SLOT(AudioChangedRestart())
@@ -384,7 +385,7 @@ OBSBasicSettings::OBSBasicSettings(QWidget *parent)
 
 	/* clang-format off */
 	HookWidget(ui->language,             COMBO_CHANGED,  GENERAL_CHANGED);
-	HookWidget(ui->theme, 		     COMBO_CHANGED,  GENERAL_CHANGED);
+	HookWidget(ui->theme, 		         COMBO_CHANGED,  GENERAL_CHANGED);
 	HookWidget(ui->enableAutoUpdates,    CHECK_CHANGED,  GENERAL_CHANGED);
 	HookWidget(ui->openStatsOnStartup,   CHECK_CHANGED,  GENERAL_CHANGED);
 	HookWidget(ui->warnBeforeStreamStart,CHECK_CHANGED,  GENERAL_CHANGED);
@@ -416,6 +417,8 @@ OBSBasicSettings::OBSBasicSettings(QWidget *parent)
 	HookWidget(ui->multiviewDrawNames,   CHECK_CHANGED,  GENERAL_CHANGED);
 	HookWidget(ui->multiviewDrawAreas,   CHECK_CHANGED,  GENERAL_CHANGED);
 	HookWidget(ui->multiviewLayout,      COMBO_CHANGED,  GENERAL_CHANGED);
+	HookWidget(ui->loginUsername,        EDIT_CHANGED,   LOGIN_CHANGED);
+	HookWidget(ui->loginPassword,        EDIT_CHANGED,   LOGIN_CHANGED);
 	HookWidget(ui->service,              COMBO_CHANGED,  STREAM1_CHANGED);
 	HookWidget(ui->server,               COMBO_CHANGED,  STREAM1_CHANGED);
 	HookWidget(ui->customServer,         EDIT_CHANGED,   STREAM1_CHANGED);
@@ -2866,6 +2869,8 @@ void OBSBasicSettings::LoadSettings(bool changedOnly)
 {
 	if (!changedOnly || generalChanged)
 		LoadGeneralSettings();
+	if (!changedOnly || loginChanged)
+		LoadLoginSettings();
 	if (!changedOnly || stream1Changed)
 		LoadStream1Settings();
 	if (!changedOnly || outputsChanged)
@@ -3583,6 +3588,8 @@ void OBSBasicSettings::SaveSettings()
 {
 	if (generalChanged)
 		SaveGeneralSettings();
+	if (loginChanged)
+		SaveLoginSettings();
 	if (stream1Changed)
 		SaveStream1Settings();
 	if (outputsChanged)
@@ -3607,6 +3614,8 @@ void OBSBasicSettings::SaveSettings()
 		std::string changed;
 		if (generalChanged)
 			AddChangedVal(changed, "general");
+		if (loginChanged)
+			AddChangedVal(changed, "login");
 		if (stream1Changed)
 			AddChangedVal(changed, "stream 1");
 		if (outputsChanged)
@@ -3985,6 +3994,15 @@ void OBSBasicSettings::on_baseResolution_editTextChanged(const QString &text)
 				     QString::number(std::get<1>(aspect))));
 
 		ResetDownscales(cx, cy);
+	}
+}
+
+void OBSBasicSettings::LoginChanged()
+{
+	if (!loading) {
+		loginChanged = true;
+		sender()->setProperty("changed", QVariant(true));
+		EnableApplyButton(true);
 	}
 }
 
@@ -4798,6 +4816,11 @@ QIcon OBSBasicSettings::GetGeneralIcon() const
 	return generalIcon;
 }
 
+QIcon OBSBasicSettings::GetLoginIcon() const
+{
+	return loginIcon;
+}
+
 QIcon OBSBasicSettings::GetStreamIcon() const
 {
 	return streamIcon;
@@ -4828,39 +4851,44 @@ QIcon OBSBasicSettings::GetAdvancedIcon() const
 	return advancedIcon;
 }
 
-void OBSBasicSettings::SetGeneralIcon(const QIcon &icon)
+void OBSBasicSettings::SetLoginIcon(const QIcon &icon)
 {
-	ui->listWidget->item(0)->setIcon(icon);
+ 	ui->listWidget->item(0)->setIcon(icon);
 }
 
-void OBSBasicSettings::SetStreamIcon(const QIcon &icon)
+void OBSBasicSettings::SetGeneralIcon(const QIcon &icon)
 {
 	ui->listWidget->item(1)->setIcon(icon);
 }
 
-void OBSBasicSettings::SetOutputIcon(const QIcon &icon)
+void OBSBasicSettings::SetStreamIcon(const QIcon &icon)
 {
 	ui->listWidget->item(2)->setIcon(icon);
 }
 
-void OBSBasicSettings::SetAudioIcon(const QIcon &icon)
+void OBSBasicSettings::SetOutputIcon(const QIcon &icon)
 {
 	ui->listWidget->item(3)->setIcon(icon);
 }
 
-void OBSBasicSettings::SetVideoIcon(const QIcon &icon)
+void OBSBasicSettings::SetAudioIcon(const QIcon &icon)
 {
 	ui->listWidget->item(4)->setIcon(icon);
 }
 
-void OBSBasicSettings::SetHotkeysIcon(const QIcon &icon)
+void OBSBasicSettings::SetVideoIcon(const QIcon &icon)
 {
 	ui->listWidget->item(5)->setIcon(icon);
 }
 
-void OBSBasicSettings::SetAdvancedIcon(const QIcon &icon)
+void OBSBasicSettings::SetHotkeysIcon(const QIcon &icon)
 {
 	ui->listWidget->item(6)->setIcon(icon);
+}
+
+void OBSBasicSettings::SetAdvancedIcon(const QIcon &icon)
+{
+	ui->listWidget->item(7)->setIcon(icon);
 }
 
 int OBSBasicSettings::CurrentFLVTrack()

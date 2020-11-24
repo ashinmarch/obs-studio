@@ -85,6 +85,8 @@ using OBSFFFormatDesc = std::unique_ptr<const ff_format_desc, OBSFFDeleter>;
 
 class OBSBasicSettings : public QDialog {
 	Q_OBJECT
+	Q_PROPERTY(QIcon loginIcon READ GetLoginIcon WRITE SetLoginIcon
+			   DESIGNABLE true)
 	Q_PROPERTY(QIcon generalIcon READ GetGeneralIcon WRITE SetGeneralIcon
 			   DESIGNABLE true)
 	Q_PROPERTY(QIcon streamIcon READ GetStreamIcon WRITE SetStreamIcon
@@ -109,6 +111,7 @@ private:
 
 	bool generalChanged = false;
 	bool stream1Changed = false;
+	bool loginChanged = false;
 	bool outputsChanged = false;
 	bool audioChanged = false;
 	bool videoChanged = false;
@@ -188,7 +191,7 @@ private:
 	{
 		return generalChanged || outputsChanged || stream1Changed ||
 		       audioChanged || videoChanged || advancedChanged ||
-		       hotkeysChanged;
+		       hotkeysChanged || loginChanged;
 	}
 
 	inline void EnableApplyButton(bool en)
@@ -199,6 +202,7 @@ private:
 	inline void ClearChanged()
 	{
 		generalChanged = false;
+		loginChanged = false;
 		stream1Changed = false;
 		outputsChanged = false;
 		audioChanged = false;
@@ -224,6 +228,7 @@ private:
 	void ReloadCodecs(const ff_format_desc *formatDesc);
 
 	void LoadGeneralSettings();
+	void LoadLoginSettings();
 	void LoadStream1Settings();
 	void LoadOutputSettings();
 	void LoadAudioSettings();
@@ -240,6 +245,9 @@ private:
 	/* general */
 	void LoadLanguageList();
 	void LoadThemeList();
+
+	/* login */
+	// void GetStreamServerAndKey();
 
 	/* stream */
 	void InitStreamPage();
@@ -261,6 +269,7 @@ private slots:
 	void DisplayEnforceWarning(bool checked);
 	void on_show_clicked();
 	void on_authPwShow_clicked();
+	void on_loginPwShow_clicked();
 	void on_connectAccount_clicked();
 	void on_disconnectAccount_clicked();
 	void on_useStreamKey_clicked();
@@ -293,6 +302,7 @@ private:
 	void LoadFPSData();
 
 	void SaveGeneralSettings();
+	void SaveLoginSettings();
 	void SaveStream1Settings();
 	void SaveOutputSettings();
 	void SaveAudioSettings();
@@ -313,6 +323,7 @@ private:
 	bool AskIfCanCloseSettings();
 
 	QIcon generalIcon;
+	QIcon loginIcon;
 	QIcon streamIcon;
 	QIcon outputIcon;
 	QIcon audioIcon;
@@ -321,6 +332,7 @@ private:
 	QIcon advancedIcon;
 
 	QIcon GetGeneralIcon() const;
+	QIcon GetLoginIcon() const;
 	QIcon GetStreamIcon() const;
 	QIcon GetOutputIcon() const;
 	QIcon GetAudioIcon() const;
@@ -359,6 +371,7 @@ private slots:
 	void on_disableOSXVSync_clicked();
 
 	void GeneralChanged();
+	void LoginChanged();
 	void AudioChanged();
 	void AudioChangedRestart();
 	void ReloadAudioSources();
@@ -392,6 +405,7 @@ private slots:
 	OBSService SpawnTempService();
 
 	void SetGeneralIcon(const QIcon &icon);
+	void SetLoginIcon(const QIcon &icon);
 	void SetStreamIcon(const QIcon &icon);
 	void SetOutputIcon(const QIcon &icon);
 	void SetAudioIcon(const QIcon &icon);

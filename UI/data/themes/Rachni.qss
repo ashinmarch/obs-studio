@@ -1276,6 +1276,7 @@ OBSBasicSettings {
     qproperty-videoIcon: url(./Dark/settings/video.svg);
     qproperty-hotkeysIcon: url(./Dark/settings/hotkeys.svg);
     qproperty-advancedIcon: url(./Dark/settings/advanced.svg);
+	qproperty-loginIcon: url(./Dark/settings/login.svg);
 }
 
 OBSBasicSettings QListWidget::item {

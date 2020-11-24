@@ -53,6 +53,15 @@
        </property>
        <item>
         <property name="text">
+         <string>Basic.Settings.Login</string>
+        </property>
+        <property name="icon">
+         <iconset resource="obs.qrc">
+          <normaloff>:/settings/images/settings/login.svg</normaloff>:/settings/images/settings/login.svg</iconset>
+        </property>
+       </item>
+       <item>
+        <property name="text">
          <string>Basic.Settings.General</string>
         </property>
         <property name="icon">
@@ -121,6 +130,104 @@
        <property name="currentIndex">
         <number>0</number>
        </property>
+       <widget class="QWidget" name="userLoginPage">
+        <layout class="QVBoxLayout" name="verticalLayout_52">
+         <property name="leftMargin">
+          <number>0</number>
+         </property>
+         <property name="topMargin">
+          <number>0</number>
+         </property>
+         <property name="rightMargin">
+          <number>0</number>
+         </property>
+         <property name="bottomMargin">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QWidget" name="widget_52" native="true">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <layout class="QFormLayout" name="userLoginLayout">
+            <property name="fieldGrowthPolicy">
+             <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
+            </property>
+            <property name="labelAlignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+            <item row="3" column="0">
+             <widget class="QLabel" name="loginUsernameLabel">
+              <property name="text">
+              <string>Basic.Settings.Login.Username</string>
+              </property>
+              <property name="buddy">
+              <cstring>loginUsername</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QLineEdit" name="loginUsername"/>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="loginPasswordLabel">
+              <property name="text">
+               <string>Basic.Settings.Login.Password</string>
+              </property>
+              <property name="openExternalLinks">
+               <bool>true</bool>
+              </property>
+              <property name="buddy">
+               <cstring>loginPassword</cstring>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QWidget" name="loginPasswordWidget" native="true">
+              <layout class="QHBoxLayout" name="horizontalLayout_52">
+               <property name="leftMargin">
+                <number>0</number>
+               </property>
+               <property name="topMargin">
+                <number>0</number>
+               </property>
+               <property name="rightMargin">
+                <number>0</number>
+               </property>
+               <property name="bottomMargin">
+                <number>0</number>
+               </property>
+               <item>
+                <widget class="QLineEdit" name="loginPassword">
+                 <property name="inputMask">
+                  <string notr="true"/>
+                 </property>
+                 <property name="text">
+                  <string notr="true"/>
+                 </property>
+                 <property name="echoMode">
+                  <enum>QLineEdit::Password</enum>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QPushButton" name="loginPwShow">
+                 <property name="text">
+                  <string>Show</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+        </layout>
+       </widget>
        <widget class="QWidget" name="generalPage">
         <layout class="QVBoxLayout" name="verticalLayout_18">
          <property name="leftMargin">
@@ -5643,6 +5750,8 @@
   <tabstop>enableLowLatencyMode</tabstop>
   <tabstop>browserHWAccel</tabstop>
   <tabstop>hotkeyFocusType</tabstop>
+  <tabstop>loginUsername</tabstop>
+  <tabstop>loginPassword</tabstop>
  </tabstops>
  <resources>
   <include location="obs.qrc"/>
