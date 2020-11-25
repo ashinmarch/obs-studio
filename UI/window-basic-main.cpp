@@ -1770,19 +1770,12 @@ void OBSBasic::OBSInit()
 		GetGlobalConfig(), "BasicWindow", "ShowSourceIcons");
 	ui->toggleSourceIcons->setChecked(sourceIconsVisible);
 
-	if (config_has_user_value(App()->GlobalConfig(), "BasicWindow",
-				  "ShowContextToolbars")) {
-		bool visible = config_get_bool(App()->GlobalConfig(),
-					       "BasicWindow",
-					       "ShowContextToolbars");
-		ui->toggleContextBar->setChecked(visible);
-		ui->contextContainer->setVisible(visible);
-		if (visible)
-			UpdateContextBar(true);
-	} else {
-		ui->toggleContextBar->setChecked(true);
-		ui->contextContainer->setVisible(true);
-	}
+	bool contextVisible = config_get_bool(
+		App()->GlobalConfig(), "BasicWindow", "ShowContextToolbars");
+	ui->toggleContextBar->setChecked(contextVisible);
+	ui->contextContainer->setVisible(contextVisible);
+	if (contextVisible)
+		UpdateContextBar(true);
 
 	{
 		ProfileScope("OBSBasic::Load");
@@ -8340,7 +8333,6 @@ void OBSBasic::UpdateReplayBuffer(bool activate)
 	replay.reset(new QPushButton());
 	replay->setAccessibleName(QTStr("Basic.Main.SaveReplay"));
 	replay->setToolTip(QTStr("Basic.Main.SaveReplay"));
-	replay->setCheckable(true);
 	replay->setChecked(false);
 	replay->setProperty("themeID",
 			    QVariant(QStringLiteral("replayIconSmall")));
